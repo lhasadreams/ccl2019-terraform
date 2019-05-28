@@ -23,5 +23,15 @@ output "a2_url" {
 }
 
 output "chef_node_public_ip" {
-  value = "${aws_instance.aws-rhel7.*.public_ip}"
+  value = "${aws_instance.aws-rhel7-node.*.public_ip}"
+}
+output "chef_node_public_dns" {
+  value = "${aws_instance.aws-rhel7-node.*.public_dns}"
+}
+
+output "chef_workstation_public_ip" {
+  value = "${aws_instance.aws-centos7-workstation.*.public_ip}"
+}
+output "chef_workstation_public_dns" {
+  value = "${aws_instance.aws-centos7-workstation.*.public_dns}"
 }

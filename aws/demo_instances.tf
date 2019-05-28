@@ -1,4 +1,4 @@
-resource "aws_instance" "aws-rhel7" {
+resource "aws_instance" "aws-rhel7-node" {
   connection {
     user        = "ec2-user"
     private_key = "${file("${var.aws_key_pair_file}")}"
@@ -53,15 +53,12 @@ resource "aws_instance" "aws-rhel7" {
       "sudo adduser hab -g hab",
       "chmod +x /tmp/install_hab.sh",
       "sudo /tmp/install_hab.sh",
+      "sudo hab license accept",
       "sudo mv /home/ec2-user/hab-sup.service /etc/systemd/system/hab-sup.service",
       "sudo systemctl daemon-reload",
       "sudo systemctl start hab-sup",
       "sudo systemctl enable hab-sup",
       "sleep 60",
-      "sudo hab svc load ${var.origin}/linux_baseline --channel stable --strategy at-once",
-      "sudo hab config apply linux_baseline.default $(date +%s) /home/ec2-user/linux_baseline.toml",
-      "sudo hab svc load ${var.origin}/chef-base --channel stable --strategy at-once",
-      "sudo hab config apply chef-base.default $(date +%s) /home/ec2-user/chef-base.toml",
     ]
   }
 }
