@@ -3,7 +3,7 @@ output "chef_automate_public_ip" {
 }
 
 output "chef_automate_server_public_r53_dns" {
-  value = "${var.automate_hostname}"
+  value = "ccl-${terraform.workspace}-a2.${var.automate_alb_r53_matcher}"
 }
 
 output "a2_admin" {
@@ -34,4 +34,12 @@ output "chef_workstation_public_ip" {
 }
 output "chef_workstation_public_dns" {
   value = "${aws_instance.aws-centos7-workstation.*.public_dns}"
+}
+
+output "student_workstation_public_dns" {
+  value = "${aws_route53_record.centos-wks.fqdn}"
+}
+
+output "student_node_public_dns" {
+  value = "${aws_route53_record.rhel7-node.*.fqdn}"
 }

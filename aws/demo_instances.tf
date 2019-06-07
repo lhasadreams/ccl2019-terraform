@@ -2,6 +2,7 @@ resource "aws_instance" "aws-rhel7-node" {
   connection {
     user        = "ec2-user"
     private_key = "${file("${var.aws_key_pair_file}")}"
+    host = self.public_ip
   }
 
   count         = "${var.linux_node_instance_count}"
@@ -14,8 +15,8 @@ resource "aws_instance" "aws-rhel7-node" {
 
   depends_on = ["aws_instance.chef_automate"]
 
-  tags {
-    Name          = "aws_rhel7_production_${random_id.instance_id.hex}_Lin_${count.index + 1}"
+  tags = {
+    Name          = "afd_rhel7_production_${random_id.instance_id.hex}_Lin_${count.index + 1}"
     X-Dept        = "${var.tag_dept}"
     X-Customer    = "${var.tag_customer}"
     X-Project     = "${var.tag_project}"
@@ -58,7 +59,10 @@ resource "aws_instance" "aws-rhel7-node" {
       "sudo systemctl daemon-reload",
       "sudo systemctl start hab-sup",
       "sudo systemctl enable hab-sup",
-      "sleep 60",
+      "sudo sed -i -e 's/PasswordAuthentication no/#PasswordAuthentication no/g' /etc/ssh/sshd_config",
+      "sudo sed -i -e 's/PasswordAuthentication yes/PasswordAuthentication yes/g' /etc/ssh/sshd_config",
+      "sudo service sshd restart",
+      "sudo echo ${var.node_workstation_password} | sudo passwd --stdin ec2-user",
     ]
   }
 }
@@ -69,7 +73,7 @@ resource "aws_instance" "aws-rhel7-node" {
 data "template_file" "sup_service" {
   template = "${file("${path.module}/templates/hab-sup.service")}"
 
-  vars {
+  vars = {
     flags = "--auto-update --listen-gossip 0.0.0.0:9638 --listen-http 0.0.0.0:9631"
   }
 }
@@ -81,7 +85,7 @@ data "template_file" "install_hab" {
 data "template_file" "linux_baseline" {
   template = "${file("${path.module}/templates/chef_nodes/linux_baseline.tpl")}"
 
-  vars {
+  vars = {
     url = "${data.external.a2_secrets.result["a2_url"]}/data-collector/v0"
     token = "${data.external.a2_secrets.result["a2_token"]}"
     verify_ssl = "${var.verify_ssl}"
@@ -92,9 +96,18 @@ data "template_file" "linux_baseline" {
 data "template_file" "chef-base" {
   template = "${file("${path.module}/templates/chef_nodes/chef-base.tpl")}"
 
-  vars {
+  vars = {
     server_url = "${data.external.a2_secrets.result["a2_url"]}/data-collector/v0"
     token = "${data.external.a2_secrets.result["a2_token"]}"
   }
+}
+
+resource "aws_route53_record" "rhel7-node" {
+  count = "${var.linux_node_instance_count}"
+  zone_id = "${data.aws_route53_zone.selected.zone_id}"
+  name    = "ccl-${terraform.workspace}-${count.index+1}-node.${var.automate_alb_r53_matcher}"
+  type    = "CNAME"
+  ttl     = "30"
+  records = ["${aws_instance.aws-rhel7-node[count.index].public_dns}"]
 }
 

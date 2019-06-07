@@ -62,7 +62,7 @@ data "aws_route53_zone" "selected" {
 
 resource "aws_route53_record" "chef_automate" {
   zone_id = "${data.aws_route53_zone.selected.zone_id}"
-  name    = "${var.automate_hostname}"
+  name    = "ccl-${terraform.workspace}-a2"
   type    = "CNAME"
   ttl     = "30"
   records = ["${aws_lb.chef_automate.dns_name}"]

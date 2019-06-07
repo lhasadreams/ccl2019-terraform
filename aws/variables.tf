@@ -94,9 +94,9 @@ variable "channel" {
   description = "channel is the habitat channel which will be used for installing A2"
 }
 
-variable "automate_hostname" {
-  description = "automate_hostname is the hostname which will be given to your A2 instance"
-}
+# variable "automate_hostname" {
+#   description = "automate_hostname is the hostname which will be given to your A2 instance"
+# }
 
 variable "automate_license" {
   default = "Contact Chef Sales at sales@chef.io to request a license."
@@ -142,4 +142,8 @@ variable "verify_ssl" {
 
 variable "linux_node_instance_count" {
   default = "1"
+}
+
+variable "node_workstation_password" {
+   default = "password"
 }

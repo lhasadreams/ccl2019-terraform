@@ -3,8 +3,8 @@ resource "aws_security_group" "chef_automate" {
   description = "Chef Automate Server"
   vpc_id      = "${aws_vpc.habmgmt-vpc.id}"
 
-  tags {
-    Name          = "${var.tag_customer}-${var.tag_project}_${random_id.instance_id.hex}_${var.tag_application}_security_group"
+  tags = {
+    Name          = "ccl-${terraform.workspace}-aws-sg"
     X-Dept        = "${var.tag_dept}"
     X-Customer    = "${var.tag_customer}"
     X-Project     = "${var.tag_project}"
@@ -142,7 +142,7 @@ resource "aws_security_group_rule" "linux_egress_allow_0-65535_all" {
 data "template_file" "install_chef_automate_cli" {
   template = "${file("${path.module}/templates/chef_automate/install_chef_automate_cli.sh.tpl")}"
 
-  vars {
+  vars = {
     channel = "${var.channel}"
   }
 }
@@ -151,6 +151,7 @@ resource "aws_instance" "chef_automate" {
   connection {
     user        = "${var.aws_ubuntu_image_user}"
     private_key = "${file("${var.aws_key_pair_file}")}"
+    host = self.public_ip
   }
 
   ami                    = "${var.aws_ami_id == "" ? data.aws_ami.ubuntu.id : var.aws_ami_id}"
@@ -166,8 +167,8 @@ resource "aws_instance" "chef_automate" {
     volume_type           = "gp2"
   }
 
-  tags {
-    Name          = "${format("chef_automate_${random_id.instance_id.hex}")}"
+  tags = {
+    Name          = "ccl-${terraform.workspace}-a2}"
     X-Dept        = "${var.tag_dept}"
     X-Customer    = "${var.tag_customer}"
     X-Project     = "${var.tag_project}"
@@ -193,14 +194,14 @@ resource "aws_instance" "chef_automate" {
 
   provisioner "remote-exec" {
     inline = [
-      "sudo hostnamectl set-hostname ${var.automate_hostname}",
+      "sudo hostnamectl set-hostname ccl-${terraform.workspace}-a2.${var.automate_alb_r53_matcher}",
       "sudo sysctl -w vm.max_map_count=262144",
       "sudo sysctl -w vm.dirty_expire_centisecs=20000",
       "curl https://packages.chef.io/files/current/latest/chef-automate-cli/chef-automate_linux_amd64.zip |gunzip - > chef-automate && chmod +x chef-automate",
       "sudo chmod +x /tmp/install_chef_automate_cli.sh",
       "sudo bash /tmp/install_chef_automate_cli.sh",
       "sudo ./chef-automate init-config --file /tmp/config.toml $(if ${var.automate_custom_ssl}; then echo '--certificate /tmp/ssl_cert --private-key /tmp/ssl_key'; fi)",
-      "sudo sed -i 's/fqdn = \".*\"/fqdn = \"${var.automate_hostname}\"/g' /tmp/config.toml",
+      "sudo sed -i 's/fqdn = \".*\"/fqdn = \"ccl-${terraform.workspace}-a2.${var.automate_alb_r53_matcher}\"/g' /tmp/config.toml",
       "sudo sed -i 's/channel = \".*\"/channel = \"${var.channel}\"/g' /tmp/config.toml",
       "sudo sed -i 's/license = \".*\"/license = \"${var.automate_license}\"/g' /tmp/config.toml",
       "sudo rm -f /tmp/ssl_cert /tmp/ssl_key",

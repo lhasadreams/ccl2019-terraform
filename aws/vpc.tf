@@ -3,7 +3,7 @@ resource "aws_vpc" "habmgmt-vpc" {
   enable_dns_support   = "true"
   enable_dns_hostnames = "true"
 
-  tags {
+  tags = {
     Name          = "${var.tag_name}-vpc"
     X-Dept        = "${var.tag_dept}"
     X-Customer    = "${var.tag_customer}"
@@ -17,7 +17,7 @@ resource "aws_vpc" "habmgmt-vpc" {
 resource "aws_internet_gateway" "habmgmt-gateway" {
   vpc_id = "${aws_vpc.habmgmt-vpc.id}"
 
-  tags {
+  tags = {
     Name = "habmgmt-gateway"
   }
 }
@@ -34,7 +34,7 @@ resource "aws_subnet" "habmgmt-subnet-a" {
   map_public_ip_on_launch = true
   availability_zone = "${var.aws_region}a"
 
-  tags {
+  tags = {
     Name = "habmgmt-subnet-a"
   }
 }
@@ -45,7 +45,7 @@ resource "aws_subnet" "habmgmt-subnet-b" {
   map_public_ip_on_launch = true
   availability_zone = "${var.aws_region}b"
 
-  tags {
+  tags = {
     Name = "habmgmt-subnet-b"
   }
 }

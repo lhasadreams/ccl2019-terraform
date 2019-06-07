@@ -2,9 +2,8 @@ resource "aws_instance" "aws-centos7-workstation" {
   connection {
     user        = "centos"
     private_key = "${file("${var.aws_key_pair_file}")}"
+    host = self.public_ip
   }
-
-  count         = "${var.linux_node_instance_count}"
   ami                         = "${data.aws_ami.centos7.id}"
   instance_type               = "t2.medium"
   key_name                    = "${var.aws_key_pair_name}"
@@ -14,8 +13,8 @@ resource "aws_instance" "aws-centos7-workstation" {
 
   depends_on = ["aws_instance.chef_automate"]
 
-  tags {
-    Name          = "aws_centos7_production_${random_id.instance_id.hex}_Lin_${count.index + 1}"
+  tags = {
+    Name          = "ccl-${terraform.workspace}-aws-centos7-workstation"
     X-Dept        = "${var.tag_dept}"
     X-Customer    = "${var.tag_customer}"
     X-Project     = "${var.tag_project}"
@@ -60,11 +59,20 @@ resource "aws_instance" "aws-centos7-workstation" {
       "sudo yum update -y",
       "sudo yum install git -y",
       "sudo yum install tree -y",
+      "sudo sed -i -e 's/PasswordAuthentication no/#PasswordAuthentication no/g' /etc/ssh/sshd_config",
+      "sudo sed -i -e 's/PasswordAuthentication yes/PasswordAuthentication yes/g' /etc/ssh/sshd_config",
+      "sudo service sshd restart",
+      "sudo echo ${var.node_workstation_password} | sudo passwd --stdin centos",
+
     ]
   }
 }
 
-////////////////////////////////
-// Template
-// See demo_instances.tf
+resource "aws_route53_record" "centos-wks" {
+  zone_id = "${data.aws_route53_zone.selected.zone_id}"
+  name    = "ccl-${terraform.workspace}-workstation.${var.automate_alb_r53_matcher}"
+  type    = "CNAME"
+  ttl     = "30"
+  records = ["${aws_instance.aws-centos7-workstation.public_dns}"]
+}
 
