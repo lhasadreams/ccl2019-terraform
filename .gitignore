@@ -13,6 +13,8 @@ terraform.tfstate*
 \#*#
 .*.sw[a-z]
 *.un~
+creds/
+gistlist.txt
 
 # Bundler
 Gemfile.lock
