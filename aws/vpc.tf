@@ -31,7 +31,7 @@ resource "aws_route" "habmgmt-internet-access" {
 resource "aws_subnet" "habmgmt-subnet-a" {
   vpc_id                  = "${aws_vpc.habmgmt-vpc.id}"
   cidr_block              = "10.0.1.0/24"
-  map_public_ip_on_launch = true
+  map_public_ip_on_launch = false
   availability_zone = "${var.aws_region}a"
 
   tags = {
